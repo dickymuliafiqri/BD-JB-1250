@@ -1,6 +1,5 @@
 package org.bdj.external;
 
-import org.bdj.Status;
 import org.bdj.api.*;
 
 public class Helper {
@@ -88,10 +87,9 @@ public class Helper {
     public static final int SYS_JITSHM_CREATE = 0x215;
     public static final int SYS_JITSHM_ALIAS = 0x216;
     public static final int SYS_KEXEC = 0x295;
-    
     public static final int SYS_SETUID = 0x17;
 
-    private static API api;
+    public static API api;
     private static long libkernelBase;
     private static long[] syscallWrappers;
     public static Buffer AIO_ERRORS;
@@ -126,15 +124,13 @@ public class Helper {
             SYS_EVF_CREATE, SYS_EVF_DELETE, SYS_EVF_SET, SYS_EVF_CLEAR,
             SYS_GETPID, SYS_GETUID, SYS_SYSCTL, SYS_IS_IN_SANDBOX,
             SYS_CPUSET_GETAFFINITY, SYS_CPUSET_SETAFFINITY, SYS_RTPRIO_THREAD,
-            SYS_MUNMAP, SYS_MMAP, SYS_JITSHM_CREATE, SYS_JITSHM_ALIAS, SYS_KEXEC,
-            SYS_SETUID
+            SYS_MUNMAP, SYS_MMAP, SYS_JITSHM_CREATE, SYS_JITSHM_ALIAS, SYS_KEXEC, SYS_SETUID
         };
 
         boolean allFound = true;
         for (int i = 0; i < requiredSyscalls.length; i++) {
             int syscall = requiredSyscalls[i];
             if (syscallWrappers[syscall] == 0) {
-                Status.println("Warning: Syscall " + Integer.toHexString(syscall) + " not found");
                 allFound = false;
             }
         }
@@ -578,16 +574,4 @@ public class Helper {
         }
         return sb.toString();
     }
-
-    public static String getPlatform() {
-        return "ps4";
-    }
-
-    // Print system information - simplified to remove KernelOffset dependencies
-    public static void printSystemInfo() {
-        Status.println("=== System Information ===");
-        Status.println("Platform: " + getPlatform());
-        Status.println("Firmware: " + getCurrentFirmwareVersion());
-    }
-
 }

