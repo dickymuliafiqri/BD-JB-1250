@@ -15,7 +15,7 @@
 # <http://www.gnu.org/licenses/>.
 
 
-DISC_LABEL := RemoteJarLoader
+DISC_LABEL := PoopsHenLoader
 
 #
 # Host tools

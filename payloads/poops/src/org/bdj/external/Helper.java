@@ -1,5 +1,6 @@
 package org.bdj.external;
 
+import org.bdj.Status;
 import org.bdj.api.*;
 
 public class Helper {
@@ -87,6 +88,7 @@ public class Helper {
     public static final int SYS_JITSHM_CREATE = 0x215;
     public static final int SYS_JITSHM_ALIAS = 0x216;
     public static final int SYS_KEXEC = 0x295;
+
     public static final int SYS_SETUID = 0x17;
 
     public static API api;
@@ -116,21 +118,22 @@ public class Helper {
         findSyscallWrappers();
 
         int[] requiredSyscalls = {
-            SYS_AIO_SUBMIT_CMD, SYS_AIO_MULTI_DELETE, SYS_AIO_MULTI_WAIT,
-            SYS_AIO_MULTI_POLL, SYS_AIO_MULTI_CANCEL, SYS_SOCKET,
-            SYS_BIND, SYS_LISTEN, SYS_CONNECT, SYS_ACCEPT,
-            SYS_SETSOCKOPT, SYS_GETSOCKOPT, SYS_SOCKETPAIR,
-            SYS_READ, SYS_WRITE, SYS_CLOSE, SYS_OPEN,
-            SYS_EVF_CREATE, SYS_EVF_DELETE, SYS_EVF_SET, SYS_EVF_CLEAR,
-            SYS_GETPID, SYS_GETUID, SYS_SYSCTL, SYS_IS_IN_SANDBOX,
-            SYS_CPUSET_GETAFFINITY, SYS_CPUSET_SETAFFINITY, SYS_RTPRIO_THREAD,
-            SYS_MUNMAP, SYS_MMAP, SYS_JITSHM_CREATE, SYS_JITSHM_ALIAS, SYS_KEXEC, SYS_SETUID
+                SYS_AIO_SUBMIT_CMD, SYS_AIO_MULTI_DELETE, SYS_AIO_MULTI_WAIT,
+                SYS_AIO_MULTI_POLL, SYS_AIO_MULTI_CANCEL, SYS_SOCKET,
+                SYS_BIND, SYS_LISTEN, SYS_CONNECT, SYS_ACCEPT,
+                SYS_SETSOCKOPT, SYS_GETSOCKOPT, SYS_SOCKETPAIR,
+                SYS_READ, SYS_WRITE, SYS_CLOSE, SYS_OPEN,
+                SYS_EVF_CREATE, SYS_EVF_DELETE, SYS_EVF_SET, SYS_EVF_CLEAR,
+                SYS_GETPID, SYS_GETUID, SYS_SYSCTL, SYS_IS_IN_SANDBOX,
+                SYS_CPUSET_GETAFFINITY, SYS_CPUSET_SETAFFINITY, SYS_RTPRIO_THREAD,
+                SYS_MUNMAP, SYS_MMAP, SYS_JITSHM_CREATE, SYS_JITSHM_ALIAS, SYS_KEXEC, SYS_SETUID
         };
 
         boolean allFound = true;
         for (int i = 0; i < requiredSyscalls.length; i++) {
             int syscall = requiredSyscalls[i];
             if (syscallWrappers[syscall] == 0) {
+                Status.println("Warning: Syscall " + Integer.toHexString(syscall) + " not found");
                 allFound = false;
             }
         }
@@ -154,39 +157,39 @@ public class Helper {
         Buffer size = new Buffer(8);
         Buffer resultBuf = new Buffer(8);
         Buffer resultSize = new Buffer(8);
-        
+
         // Setup translate name mib
         translateNameMib.putLong(0, 0x300000000L);
         size.putLong(0, 0x70);
-        
+
         // Convert string name to byte array with null terminator
         byte[] nameBytes = new byte[name.length() + 1];
         for (int i = 0; i < name.length(); i++) {
-            nameBytes[i] = (byte)name.charAt(i);
+            nameBytes[i] = (byte) name.charAt(i);
         }
         nameBytes[name.length()] = 0;
         Buffer nameBuffer = new Buffer(nameBytes.length);
         nameBuffer.put(0, nameBytes);
-        
+
         // Translate name to mib
-        long result = syscall(SYS_SYSCTL, translateNameMib.address(), 2L, 
-                             mib.address(), size.address(), 
-                             nameBuffer.address(), (long)nameBytes.length);
+        long result = syscall(SYS_SYSCTL, translateNameMib.address(), 2L,
+                mib.address(), size.address(),
+                nameBuffer.address(), (long) nameBytes.length);
         if (result < 0) {
             throw new RuntimeException("Failed to translate sysctl name to mib: " + name);
         }
-        
+
         // Get the actual value
         resultSize.putLong(0, 8);
-        result = syscall(SYS_SYSCTL, mib.address(), 2L, 
-                        resultBuf.address(), resultSize.address(), 0L, 0L);
+        result = syscall(SYS_SYSCTL, mib.address(), 2L,
+                resultBuf.address(), resultSize.address(), 0L, 0L);
         if (result < 0) {
             throw new RuntimeException("Failed to get sysctl value for: " + name);
         }
-        
-        int majorByte = resultBuf.getByte(3) & 0xFF;  // Second byte of version data
-        int minorByte = resultBuf.getByte(2) & 0xFF;  // First byte of version data
-        
+
+        int majorByte = resultBuf.getByte(3) & 0xFF; // Second byte of version data
+        int minorByte = resultBuf.getByte(2) & 0xFF; // First byte of version data
+
         String majorHex = Integer.toHexString(majorByte);
         String minorHex = Integer.toHexString(minorByte);
         if (minorHex.length() == 1) {
@@ -235,18 +238,18 @@ public class Helper {
 
         for (int i = 0; i <= TEXT_SIZE - 12; i++) {
             if (libkernelText[i] == 0x48 &&
-            libkernelText[i + 1] == (byte)0xc7 &&
-            libkernelText[i + 2] == (byte)0xc0 &&
-            libkernelText[i + 7] == 0x49 &&
-            libkernelText[i + 8] == (byte)0x89 &&
-            libkernelText[i + 9] == (byte)0xca &&
-            libkernelText[i + 10] == 0x0f &&
-            libkernelText[i + 11] == 0x05) {
+                    libkernelText[i + 1] == (byte) 0xc7 &&
+                    libkernelText[i + 2] == (byte) 0xc0 &&
+                    libkernelText[i + 7] == 0x49 &&
+                    libkernelText[i + 8] == (byte) 0x89 &&
+                    libkernelText[i + 9] == (byte) 0xca &&
+                    libkernelText[i + 10] == 0x0f &&
+                    libkernelText[i + 11] == 0x05) {
 
                 int syscallNum = (libkernelText[i + 3] & 0xFF) |
-                ((libkernelText[i + 4] & 0xFF) << 8) |
-                ((libkernelText[i + 5] & 0xFF) << 16) |
-                ((libkernelText[i + 6] & 0xFF) << 24);
+                        ((libkernelText[i + 4] & 0xFF) << 8) |
+                        ((libkernelText[i + 5] & 0xFF) << 16) |
+                        ((libkernelText[i + 6] & 0xFF) << 24);
 
                 if (syscallNum >= 0 && syscallNum < syscallWrappers.length) {
                     syscallWrappers[syscallNum] = libkernelBase + i;
@@ -286,7 +289,7 @@ public class Helper {
 
     // Utility functions
     public static short htons(int port) {
-        return (short)(((port << 8) | (port >>> 8)) & 0xFFFF);
+        return (short) (((port << 8) | (port >>> 8)) & 0xFFFF);
     }
 
     public static int aton(String ip) {
@@ -321,29 +324,29 @@ public class Helper {
 
         String[] result = new String[parts.size()];
         for (int i = 0; i < parts.size(); i++) {
-            result[i] = (String)parts.elementAt(i);
+            result[i] = (String) parts.elementAt(i);
         }
         return result;
     }
 
     public static int createUdpSocket() {
-        long result = syscall(SYS_SOCKET, (long)AF_INET6, (long)SOCK_DGRAM, (long)IPPROTO_UDP);
+        long result = syscall(SYS_SOCKET, (long) AF_INET6, (long) SOCK_DGRAM, (long) IPPROTO_UDP);
         if (result == -1) {
             throw new RuntimeException("new_socket() error: " + result);
         }
-        return (int)result;
+        return (int) result;
     }
 
     public static int createTcpSocket() {
-        long result = syscall(SYS_SOCKET, (long)AF_INET, (long)SOCK_STREAM, 0L);
+        long result = syscall(SYS_SOCKET, (long) AF_INET, (long) SOCK_STREAM, 0L);
         if (result == -1) {
             throw new RuntimeException("new_tcp_socket() error: " + result);
         }
-        return (int)result;
+        return (int) result;
     }
 
     public static void setSockOpt(int sd, int level, int optname, Buffer optval, int optlen) {
-        long result = syscall(SYS_SETSOCKOPT, (long)sd, (long)level, (long)optname, optval.address(), (long)optlen);
+        long result = syscall(SYS_SETSOCKOPT, (long) sd, (long) level, (long) optname, optval.address(), (long) optlen);
         if (result == -1) {
             throw new RuntimeException("setsockopt() error: " + result);
         }
@@ -352,7 +355,8 @@ public class Helper {
     public static int getSockOpt(int sd, int level, int optname, Buffer optval, int optlen) {
         Buffer size = new Buffer(8);
         size.putInt(0, optlen);
-        long result = syscall(SYS_GETSOCKOPT, (long)sd, (long)level, (long)optname, optval.address(), size.address());
+        long result = syscall(SYS_GETSOCKOPT, (long) sd, (long) level, (long) optname, optval.address(),
+                size.address());
         if (result == -1) {
             throw new RuntimeException("getsockopt() error: " + result);
         }
@@ -362,9 +366,10 @@ public class Helper {
     public static int getCurrentCore() {
         try {
             Buffer mask = new Buffer(0x10);
-            mask.fill((byte)0);
+            mask.fill((byte) 0);
 
-            long result = syscall(SYS_CPUSET_GETAFFINITY, (long)CPU_LEVEL_WHICH, (long)CPU_WHICH_TID, -1L, 0x10L, mask.address());
+            long result = syscall(SYS_CPUSET_GETAFFINITY, (long) CPU_LEVEL_WHICH, (long) CPU_WHICH_TID, -1L, 0x10L,
+                    mask.address());
             if (result != 0) {
                 return -1;
             }
@@ -387,12 +392,13 @@ public class Helper {
     public static boolean pinToCore(int core) {
         try {
             Buffer mask = new Buffer(0x10);
-            mask.fill((byte)0);
+            mask.fill((byte) 0);
 
             int maskValue = 1 << core;
-            mask.putShort(0, (short)maskValue);
+            mask.putShort(0, (short) maskValue);
 
-            long result = syscall(SYS_CPUSET_SETAFFINITY, (long)CPU_LEVEL_WHICH, (long)CPU_WHICH_TID, -1L, 0x10L, mask.address());
+            long result = syscall(SYS_CPUSET_SETAFFINITY, (long) CPU_LEVEL_WHICH, (long) CPU_WHICH_TID, -1L, 0x10L,
+                    mask.address());
             return result == 0;
         } catch (Exception e) {
             return false;
@@ -402,10 +408,10 @@ public class Helper {
     public static boolean setRealtimePriority(int priority) {
         try {
             Buffer rtprio = new Buffer(0x4);
-            rtprio.putShort(0, (short)RTP_PRIO_REALTIME);
-            rtprio.putShort(2, (short)priority);
+            rtprio.putShort(0, (short) RTP_PRIO_REALTIME);
+            rtprio.putShort(2, (short) priority);
 
-            long result = syscall(SYS_RTPRIO_THREAD, (long)RTP_SET, 0L, rtprio.address());
+            long result = syscall(SYS_RTPRIO_THREAD, (long) RTP_SET, 0L, rtprio.address());
             return result == 0;
         } catch (Exception e) {
             return false;
@@ -422,23 +428,23 @@ public class Helper {
     }
 
     public static long aioSubmitCmd(int cmd, long reqs, int numReqs, int prio, long ids) {
-        return syscall(SYS_AIO_SUBMIT_CMD, (long)cmd, reqs, (long)numReqs, (long)prio, ids);
+        return syscall(SYS_AIO_SUBMIT_CMD, (long) cmd, reqs, (long) numReqs, (long) prio, ids);
     }
 
     public static long aioMultiCancel(long ids, int numIds, long states) {
-        return syscall(SYS_AIO_MULTI_CANCEL, ids, (long)numIds, states);
+        return syscall(SYS_AIO_MULTI_CANCEL, ids, (long) numIds, states);
     }
 
     public static long aioMultiPoll(long ids, int numIds, long states) {
-        return syscall(SYS_AIO_MULTI_POLL, ids, (long)numIds, states);
+        return syscall(SYS_AIO_MULTI_POLL, ids, (long) numIds, states);
     }
 
     public static long aioMultiDelete(long ids, int numIds, long states) {
-        return syscall(SYS_AIO_MULTI_DELETE, ids, (long)numIds, states);
+        return syscall(SYS_AIO_MULTI_DELETE, ids, (long) numIds, states);
     }
 
     public static long aioMultiWait(long ids, int numIds, long states, int mode, long timeout) {
-        return syscall(SYS_AIO_MULTI_WAIT, ids, (long)numIds, states, (long)mode, timeout);
+        return syscall(SYS_AIO_MULTI_WAIT, ids, (long) numIds, states, (long) mode, timeout);
     }
 
     // Bulk AIO operations
@@ -489,10 +495,10 @@ public class Helper {
         int len = ((size >>> 3) - 1) & (~1);
         size = (len + 1) << 3;
 
-        buf.putByte(0, (byte)0);             // ip6r_nxt
-        buf.putByte(1, (byte)len);           // ip6r_len
-        buf.putByte(2, (byte)0);             // ip6r_type
-        buf.putByte(3, (byte)(len >>> 1));   // ip6r_segleft
+        buf.putByte(0, (byte) 0); // ip6r_nxt
+        buf.putByte(1, (byte) len); // ip6r_len
+        buf.putByte(2, (byte) 0); // ip6r_type
+        buf.putByte(3, (byte) (len >>> 1)); // ip6r_segleft
 
         return size;
     }
@@ -515,27 +521,27 @@ public class Helper {
 
     // EVF operations
     public static int createEvf(long name, int flags) {
-        long result = syscall(SYS_EVF_CREATE, name, 0L, (long)flags);
+        long result = syscall(SYS_EVF_CREATE, name, 0L, (long) flags);
         if (result == -1) {
             throw new RuntimeException("evf_create() error: " + result);
         }
-        return (int)result;
+        return (int) result;
     }
 
     public static void setEvfFlags(int id, int flags) {
-        long clearResult = syscall(SYS_EVF_CLEAR, (long)id, 0L);
+        long clearResult = syscall(SYS_EVF_CLEAR, (long) id, 0L);
         if (clearResult == -1) {
             throw new RuntimeException("evf_clear() error: " + clearResult);
         }
 
-        long setResult = syscall(SYS_EVF_SET, (long)id, (long)flags);
+        long setResult = syscall(SYS_EVF_SET, (long) id, (long) flags);
         if (setResult == -1) {
             throw new RuntimeException("evf_set() error: " + setResult);
         }
     }
 
     public static void freeEvf(int id) {
-        long result = syscall(SYS_EVF_DELETE, (long)id);
+        long result = syscall(SYS_EVF_DELETE, (long) id);
         if (result == -1) {
             throw new RuntimeException("evf_delete() error: " + result);
         }
@@ -565,13 +571,26 @@ public class Helper {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < 8; i++) {
             byte b = buf.getByte(i);
-            if (b == 0) break;
+            if (b == 0)
+                break;
             if (b >= 32 && b <= 126) {
-                sb.append((char)b);
+                sb.append((char) b);
             } else {
                 break;
             }
         }
         return sb.toString();
     }
+
+    public static String getPlatform() {
+        return "ps4";
+    }
+
+    // Print system information - simplified to remove KernelOffset dependencies
+    public static void printSystemInfo() {
+        Status.println("=== System Information ===");
+        Status.println("Platform: " + getPlatform());
+        Status.println("Firmware: " + getCurrentFirmwareVersion());
+    }
+
 }

